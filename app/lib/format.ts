@@ -49,16 +49,20 @@ export function formatPassengers(count: number): string {
 }
 
 /**
- * Adds prices without ever making them floats. 0.1 + 0.2 is not 0.3, and an
- * invoice total that is a cent out is a real problem, so the arithmetic happens
- * in integer cents and comes back as a string.
+ * Money is handled as integer cents throughout. 0.1 + 0.2 is not 0.3 in
+ * floating point, and an invoice total that is a cent out is a real problem.
  */
-export function sumMoney(values: string[]): string {
-  const cents = values.reduce((total, value) => {
-    const [whole, fraction = "0"] = value.split(".");
-    return total + Number(whole) * 100 + Number(fraction.padEnd(2, "0").slice(0, 2));
-  }, 0);
+export function toCents(amount: string): number {
+  const [whole, fraction = "0"] = amount.split(".");
+  return Number(whole) * 100 + Number(fraction.padEnd(2, "0").slice(0, 2));
+}
+
+export function fromCents(cents: number): string {
   return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
+}
+
+export function sumMoney(values: string[]): string {
+  return fromCents(values.reduce((total, value) => total + toCents(value), 0));
 }
 
 /**
@@ -86,4 +90,45 @@ export function monthBounds(date: string): { from: string; to: string } {
   const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const mm = String(m).padStart(2, "0");
   return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(lastDay).padStart(2, "0")}` };
+}
+
+/** Shifts a YYYY-MM-DD date by whole days, staying in calendar-date space. */
+export function addDays(date: string, days: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const shifted = new Date(Date.UTC(y, m - 1, d + days));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    shifted.getUTCDate(),
+  ).padStart(2, "0")}`;
+}
+
+/**
+ * "Today" / "Tomorrow" / "Yesterday" where it helps a dispatcher orient, and
+ * null everywhere else so the date itself does the work.
+ */
+export function relativeDayLabel(date: string, today: string): string | null {
+  if (date === today) return "Today";
+  if (date === addDays(today, 1)) return "Tomorrow";
+  if (date === addDays(today, -1)) return "Yesterday";
+  return null;
+}
+
+/** "2026-09-02" -> "2 Sep". The year belongs in the period line, not every row. */
+export function formatDayMonth(date: string): string {
+  const [, m, d] = date.split("-").map(Number);
+  return `${d} ${MONTHS[m - 1].slice(0, 3)}`;
+}
+
+/**
+ * The span an invoice covers, said the way a person would: "2 to 4 September
+ * 2026", not two full dates joined by a dash. Collapses whatever the two ends
+ * share.
+ */
+export function formatDateRange(from: string, to: string): string {
+  const [fy, fm, fd] = from.split("-").map(Number);
+  const [ty, tm, td] = to.split("-").map(Number);
+
+  if (from === to) return `${fd} ${MONTHS[fm - 1]} ${fy}`;
+  if (fy === ty && fm === tm) return `${fd} to ${td} ${MONTHS[tm - 1]} ${ty}`;
+  if (fy === ty) return `${fd} ${MONTHS[fm - 1]} to ${td} ${MONTHS[tm - 1]} ${ty}`;
+  return `${fd} ${MONTHS[fm - 1]} ${fy} to ${td} ${MONTHS[tm - 1]} ${ty}`;
 }

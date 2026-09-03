@@ -7,6 +7,9 @@ import { FilterTabs } from "@/app/components/filter-tabs";
 /**
  * Chrome for every signed-in screen. The band recedes so the run sheet is the
  * page; the wordmark is the only serif up here.
+ *
+ * On a phone the tabs drop to their own scrollable row beneath the wordmark
+ * and the account links; from `sm` up everything sits on one line.
  */
 export default async function DispatchLayout({
   children,
@@ -18,17 +21,19 @@ export default async function DispatchLayout({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="bg-ink">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link
             href="/"
-            className="font-serif text-xl font-semibold tracking-tight text-card"
+            className="order-1 font-serif text-xl font-semibold tracking-tight text-card"
           >
             Jetline
           </Link>
 
-          <FilterTabs />
+          <div className="order-3 -mx-4 w-full overflow-x-auto px-4 sm:order-2 sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
+            <FilterTabs />
+          </div>
 
-          <div className="ml-auto flex items-center gap-x-5">
+          <div className="order-2 ml-auto flex items-center gap-x-5 sm:order-3">
             <Link
               href="/invoices"
               className="text-sm text-rule/70 transition-colors hover:text-card"
@@ -53,7 +58,9 @@ export default async function DispatchLayout({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+        {children}
+      </main>
     </div>
   );
 }

@@ -18,6 +18,13 @@ export async function POST(request: Request): Promise<Response> {
     .getAll("bookingId")
     .filter((v): v is string => typeof v === "string");
 
+  // A row only carries HST if it is also on the invoice — a stale taxedId for
+  // an unticked row must not put tax on something that isn't being billed.
+  const taxedPosted = new Set(
+    form.getAll("taxedId").filter((v): v is string => typeof v === "string"),
+  );
+  const taxed = new Set(ids.filter((id) => taxedPosted.has(id)));
+
   if (ids.length === 0) {
     return new Response("Select at least one trip to invoice.", { status: 400 });
   }
@@ -32,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
     return new Response("Those trips no longer exist.", { status: 404 });
   }
 
-  const pdf = await buildInvoicePdf(settings, bookings);
+  const pdf = await buildInvoicePdf(settings, bookings, taxed);
 
   const first = bookings[0].pickupDate;
   const last = bookings[bookings.length - 1].pickupDate;

@@ -23,6 +23,7 @@ export default async function SettingsPage() {
           email: current.email,
           address: current.address,
           timezone: current.timezone,
+          hstNumber: current.hstNumber ?? "",
         }}
       />
     </>

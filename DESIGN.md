@@ -69,6 +69,13 @@ trip happening now; here it's the total, the number that moves as you work.
 Column headers appear in the PDF and not on screen: the document is formal and
 earns them, the working view doesn't need labels over self-evident columns.
 
+The document aims at hotel stationery rather than a software receipt: a
+confident masthead over the brass rule, a period line that states what is being
+billed in words, generous row rhythm, and a totals block aligned to the amount
+column instead of one more table row. Line items drop the year — the period line
+carries it, unless the invoice straddles two years, in which case every line
+spells it out.
+
 The PDF uses the built-in Times-Roman and Helvetica rather than embedded
 Spectral and IBM Plex. Same serif/sans relationship, no font binaries in the
 repo, and nothing to download at runtime inside a serverless function.
@@ -79,3 +86,51 @@ Registering the real faces is a drop-in change if the brand match matters more.
 - A floating "3 selected / $845" summary card — the SaaS default.
 - "Generate PDF" as a button label. It says "Download invoice": what you get,
   not what the system does.
+
+## Days are the run sheet's spine
+
+Rows are grouped under the day they run, with **Today** / **Tomorrow** /
+**Yesterday** carrying the heading where they help and the full date beside
+them. A list spanning several dates reads as randomly ordered when every row
+shows only a clock time — which is exactly what happened when the Upcoming view
+hid dates on the assumption it covered a single day.
+
+The now-rule lives inside today's group, marking how much of the day is behind.
+Its position flips with the sort direction, so `isSoonestFirst()` in
+`app/lib/views.ts` is the single source of truth for which way a list runs —
+the query's ORDER BY and the rule both read it.
+
+## Mobile
+
+One breakpoint, `sm` (640px). Below it:
+
+- The header keeps the wordmark and account links on one line and drops the
+  filter tabs to their own row, scrolling sideways rather than stacking.
+- A booking row stacks: time inline at the top, then customer and route, then
+  price and actions sharing the last line.
+- Invoice line items stack, with vehicle and price sharing a row. `sm:contents`
+  dissolves that wrapper above the breakpoint so they become ordinary columns.
+- Page padding drops from `px-6` to `px-4`.
+
+No fixed width without an `sm:` prefix is wide enough to overflow a 360px
+screen — worth re-checking whenever a column is added.
+
+## HST
+
+Every trip is taxed by default. Two columns of checkboxes head the line items —
+the left decides what is billed, the right what carries HST — and each has its
+own "all" control at the top, so removing tax from everything and removing it
+from one trip are the same gesture at different scales.
+
+Tax is worked out on the taxable subtotal as a whole, never summed per line:
+rounding each line separately drifts from the invoice's own arithmetic. All of
+it runs in integer cents (`app/lib/tax.ts`).
+
+The PDF grows a Tax column **only when an invoice is mixed** — on an all-taxed
+invoice the column would say the same thing on every row. Exempt lines read
+"None" rather than a dash: a blank cell looks like an oversight, and an em dash
+is a glyph risk in the PDF's built-in encoding.
+
+The HST registration number lives in Settings and prints in the letterhead. It
+is what makes the document a tax invoice a customer can claim against; it is
+optional because an operator under the small-supplier threshold has none.

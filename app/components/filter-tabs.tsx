@@ -31,7 +31,8 @@ export function FilterTabs() {
   };
 
   return (
-    <nav className="flex flex-wrap items-center gap-x-5 gap-y-1">
+    // nowrap so the row scrolls sideways on a phone instead of stacking.
+    <nav className="flex items-center gap-x-5 whitespace-nowrap">
       {ORDER.map((view) => {
         const isActive = pathname === "/" && VIEWS.includes(active) && active === view;
         return (

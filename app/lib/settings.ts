@@ -24,6 +24,7 @@ export type SettingsInput = {
   email: string;
   address: string;
   timezone: string;
+  hstNumber: string | null;
 };
 
 export async function updateSettings(input: SettingsInput): Promise<void> {

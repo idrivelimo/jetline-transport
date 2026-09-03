@@ -28,7 +28,7 @@ export default async function InvoicesPage(props: PageProps<"/invoices">) {
 
       <form
         method="get"
-        className="mb-5 flex flex-wrap items-end gap-x-5 gap-y-3 border border-rule bg-card px-5 py-4"
+        className="mb-5 flex flex-wrap items-end gap-x-5 gap-y-3 border border-rule bg-card px-4 py-4 sm:px-5"
       >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="from" className="text-sm font-medium text-ink">From</label>
@@ -56,14 +56,14 @@ export default async function InvoicesPage(props: PageProps<"/invoices">) {
 
         <button
           type="submit"
-          className="ml-auto rounded-sm bg-ink px-4 py-2 text-sm font-medium text-card transition-colors hover:bg-ink-soft"
+          className="rounded-sm bg-ink px-4 py-2 text-sm font-medium text-card transition-colors hover:bg-ink-soft sm:ml-auto"
         >
           Show trips
         </button>
       </form>
 
       {bookings.length === 0 ? (
-        <div className="border border-rule bg-card px-5 py-12 text-center">
+        <div className="border border-rule bg-card px-4 py-12 text-center sm:px-5">
           <p className="text-sm text-slate">
             No trips between these dates.{" "}
             {!includeCanceled && "Canceled trips are left out unless you ask for them."}

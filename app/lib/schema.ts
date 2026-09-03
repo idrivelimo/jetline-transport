@@ -57,6 +57,10 @@ export const settings = pgTable("settings", {
   email: text("email").notNull(),
   address: text("address").notNull(),
   timezone: text("timezone").notNull().default("America/Toronto"),
+
+  // Printed on invoices so the customer can claim an input tax credit. Null
+  // when the operator isn't registered for HST.
+  hstNumber: text("hst_number"),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 

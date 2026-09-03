@@ -68,6 +68,25 @@ export function SettingsForm({
         </div>
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label htmlFor="hstNumber" className="text-sm font-medium text-ink">
+            HST number
+          </label>
+          <input
+            id="hstNumber"
+            name="hstNumber"
+            type="text"
+            defaultValue={values.hstNumber ?? ""}
+            placeholder="123456789 RT0001"
+            className="rounded-sm border border-rule bg-card px-3 py-2 text-[15px] text-ink
+                       placeholder:text-slate/60 focus:border-brass focus:outline-none"
+          />
+          <p className="text-[13px] text-slate">
+            Printed on invoices so customers can claim the tax back. Leave it
+            blank if you aren&rsquo;t registered for HST.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label htmlFor="timezone" className="text-sm font-medium text-ink">
             Timezone
           </label>

@@ -8,7 +8,7 @@ import { ASSUMED_TRIP_MS } from "./booking-status";
 import { verifySession } from "./dal";
 import { getSettings } from "./settings";
 import type { BookingInput } from "./validation";
-import type { View } from "./views";
+import { isSoonestFirst, type View } from "./views";
 
 /**
  * Every read and write goes through verifySession() first. Proxy redirects
@@ -61,15 +61,22 @@ function searchCondition(term: string): SQL | undefined {
   );
 }
 
-/** What's coming reads soonest-first; an archive reads most-recent-first. */
 function ordering(view: View) {
-  const soonestFirst = view === "upcoming" || view === "in_progress";
-  return soonestFirst ? asc(bookings.pickupAt) : desc(bookings.pickupAt);
+  return isSoonestFirst(view) ? asc(bookings.pickupAt) : desc(bookings.pickupAt);
 }
 
-export async function listBookings(view: View, search = ""): Promise<Booking[]> {
+/** Narrows to a single calendar day, as the operator wrote it. */
+function dayCondition(date: string): SQL | undefined {
+  return date ? eq(bookings.pickupDate, date) : undefined;
+}
+
+export async function listBookings(
+  view: View,
+  search = "",
+  date = "",
+): Promise<Booking[]> {
   await verifySession();
-  const where = and(viewCondition(view), searchCondition(search));
+  const where = and(viewCondition(view), searchCondition(search), dayCondition(date));
   return db().select().from(bookings).where(where).orderBy(ordering(view));
 }
 

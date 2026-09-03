@@ -17,6 +17,13 @@ const settingsInput = z.object({
   timezone: z
     .string()
     .refine((v) => supportedTimezones().includes(v), "Choose a timezone from the list."),
+
+  // Optional: an operator under the small-supplier threshold has no number,
+  // and their invoices then carry no HST line.
+  hstNumber: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v)),
 });
 
 export async function saveSettings(
