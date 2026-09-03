@@ -52,3 +52,30 @@ outlined, completed is quiet slate, canceled is struck through.
 - Card grid of bookings with pill statuses — the SaaS-card kit.
 - Stat tiles across the top (`4 trips` / `$845 booked`) — the default hero
   treatment. Replaced by one line of running text under the date.
+
+## Invoicing
+
+The screen is the **draft invoice**, not a form that produces one. Line items,
+a rule, then the total — the total sits in the price column as the list's last
+line, so the page reads the way the document reads.
+
+The brief's "two modes" (date range *or* hand-pick) are one flow: the range
+filters what's on screen, the checkboxes choose from it, and rows arrive
+pre-ticked. Billing a whole month is one action; hand-picking is unticking.
+
+Brass keeps its meaning — the thing that is live. On the run sheet that's the
+trip happening now; here it's the total, the number that moves as you work.
+
+Column headers appear in the PDF and not on screen: the document is formal and
+earns them, the working view doesn't need labels over self-evident columns.
+
+The PDF uses the built-in Times-Roman and Helvetica rather than embedded
+Spectral and IBM Plex. Same serif/sans relationship, no font binaries in the
+repo, and nothing to download at runtime inside a serverless function.
+Registering the real faces is a drop-in change if the brand match matters more.
+
+### Also revised away from
+- Tabs or a radio to pick "mode" — collapsed into the single flow above.
+- A floating "3 selected / $845" summary card — the SaaS default.
+- "Generate PDF" as a button label. It says "Download invoice": what you get,
+  not what the system does.

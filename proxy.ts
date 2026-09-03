@@ -31,10 +31,12 @@ export const config = {
   matcher: [
     /*
      * Everything except: the login page, Next's own assets, and static files.
-     * Route Handlers under /api are intentionally included — they gate
-     * themselves with hasSession(), and this stops unauthenticated requests
-     * one layer earlier.
+     *
+     * /api is excluded on purpose. Route Handlers gate themselves through
+     * hasSession() and answer 401; if proxy redirected them first, a download
+     * or fetch would follow the redirect and quietly receive the login page
+     * instead of an error it can act on.
      */
-    "/((?!login|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api|login|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Netlify edge-function bundling artifact (no edge functions in this project)
+deno.lock
