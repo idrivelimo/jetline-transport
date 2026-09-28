@@ -55,7 +55,7 @@ describe("shouldAutoComplete", () => {
 
 describe("timezone independence", () => {
   /**
-   * The reason `pickup_at` exists. A 9pm pickup in Toronto (UTC-4 in March) is
+   * The reason `pickupAt` exists. A 9pm pickup in Toronto (UTC-4 in March) is
    * 01:00 UTC the next day. Comparing the naive "21:00" against a UTC clock
    * would call this trip finished while the car is still on the road; comparing
    * instants gets it right regardless of where the server runs.

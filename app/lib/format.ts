@@ -1,10 +1,10 @@
 /**
  * Display helpers.
  *
- * These read `pickup_date` and `pickup_time` as the strings the operator typed,
+ * These read `pickupDate` and `pickupTime` as the strings the operator typed,
  * never via `new Date(...)`. Parsing "2026-03-14" with the Date constructor
  * treats it as UTC and can show the day before — the conversion to an instant
- * already happened once, in `pickup_at`, and must not happen again here.
+ * already happened once, in `pickupAt`, and must not happen again here.
  */
 
 const MONTHS = [

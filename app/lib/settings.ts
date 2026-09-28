@@ -1,38 +1,53 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
-
-import { db } from "./db";
-import { settings, type Settings } from "./schema";
+import { ALREADY_EXISTS, hasCode, settingsDoc } from "./db";
+import type { Settings } from "./schema";
 import { verifySession } from "./dal";
 
 /**
- * The single settings row. It is the invoice letterhead, and its timezone
+ * The single settings document. It is the invoice letterhead, and its timezone
  * decides how every booking's local date and time resolve into an instant —
  * so changing it changes what "9pm" means for bookings entered afterwards.
  */
 
+/**
+ * Placeholders, so the Settings screen has something to edit rather than a
+ * null state. Also fills any field added after the document was first
+ * written: Firestore has no migrations to backfill one.
+ */
+const DEFAULTS: Omit<Settings, "updatedAt"> = {
+  companyName: "Jetline",
+  phone: "",
+  email: "",
+  address: "",
+  timezone: "America/Toronto",
+  hstNumber: null,
+};
+
 export async function getSettings(): Promise<Settings> {
   await verifySession();
-  const [row] = await db().select().from(settings).where(eq(settings.id, 1));
-  return row;
+  const ref = settingsDoc();
+
+  const snapshot = await ref.get();
+  if (snapshot.exists) return { ...DEFAULTS, ...snapshot.data()! };
+
+  // First run. `create` fails if a concurrent request got there first, in
+  // which case theirs is the document.
+  const seeded: Settings = { ...DEFAULTS, updatedAt: new Date() };
+  try {
+    await ref.create(seeded);
+    return seeded;
+  } catch (error) {
+    if (!hasCode(error, ALREADY_EXISTS)) throw error;
+    return { ...DEFAULTS, ...(await ref.get()).data()! };
+  }
 }
 
-export type SettingsInput = {
-  companyName: string;
-  phone: string;
-  email: string;
-  address: string;
-  timezone: string;
-  hstNumber: string | null;
-};
+export type SettingsInput = Omit<Settings, "updatedAt">;
 
 export async function updateSettings(input: SettingsInput): Promise<void> {
   await verifySession();
-  await db()
-    .update(settings)
-    .set({ ...input, updatedAt: new Date() })
-    .where(eq(settings.id, 1));
+  await settingsDoc().set({ ...input, updatedAt: new Date() });
 }
 
 /** Every IANA zone the runtime knows, for the Settings picker. */

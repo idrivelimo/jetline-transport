@@ -1,0 +1,11 @@
+# Everything else (build command, publish directory, the Next.js runtime) is
+# detected by Netlify; this file only holds what detection can't know.
+
+[build.environment]
+  # firebase-admin requires Node 22 or later, in the build and in functions.
+  NODE_VERSION = "22"
+
+# The hourly sweep uses firebase-admin, whose Firestore client loads files from
+# its own package at runtime. Shipped as-is rather than bundled, they're there.
+[functions."sweep-bookings"]
+  external_node_modules = ["firebase-admin"]

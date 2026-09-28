@@ -22,7 +22,7 @@ so. Never describe a check you did not perform.
 
 ```bash
 npm run dev          # http://localhost:3000
-netlify dev          # use this instead when the database or a scheduled function is involved
+netlify dev          # use this instead when the scheduled function is involved
 ```
 
 Start it in the background and wait for readiness rather than sleeping:
@@ -57,9 +57,16 @@ one must each be rejected.
 
 ## Per-feature checks
 
-**Bookings** — create one through the form and confirm the row in the database
-(`netlify database connect --query "select ..."`), not just that the UI redirected.
-Edit it, cancel it, restore it, and delete it, confirming the row each time.
+Point the app at the dev Firebase project or the Firestore emulator, never at
+production. The emulator needs Java 21+ and a `firebase.json`; start it with
+`npx firebase-tools emulators:start --only firestore --project demo-jetline`,
+then run the app with `FIRESTORE_EMULATOR_HOST=127.0.0.1:<port>` and
+`FIREBASE_PROJECT_ID=demo-jetline`. Read documents back with a short
+`firebase-admin` script using the same two variables.
+
+**Bookings** — create one through the form and confirm the document in Firestore,
+not just that the UI redirected. Edit it, cancel it, restore it, and delete it,
+confirming the document each time.
 Cancel must be reversible; delete must not.
 
 **Status** — the derived label and the stored column are different things. Seed a
@@ -68,8 +75,8 @@ window) and confirm the run sheet's label. Then invoke the sweep and confirm the
 stored `status` changed only for the rows that should change — never a canceled
 one, never a manually completed one.
 
-**Timezone** — enter a booking for an evening hour and confirm `pickup_at` in the
-database is the correct UTC instant for `settings.timezone`, not the naive time.
+**Timezone** — enter a booking for an evening hour and confirm `pickupAt` in the
+database is the correct UTC instant for the settings timezone, not the naive time.
 This is the bug the column exists to prevent, so check it after any change to how
 bookings are written.
 

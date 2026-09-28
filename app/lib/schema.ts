@@ -1,76 +1,76 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  date,
-  time,
-  timestamp,
-  integer,
-  numeric,
-} from "drizzle-orm/pg-core";
-
 import type { StoredStatus } from "./booking-status";
 
 /**
- * Types and query surface for the schema.
+ * The shape of each Firestore collection.
  *
- * Netlify applies the SQL in netlify/database/migrations/ — Drizzle does not run
- * migrations here. This file must be kept in step with those files by hand; a
- * schema change means a new migration, never an edit to an applied one.
+ * Firestore enforces no schema, so these types are the schema: every write goes
+ * through app/lib/db.ts and the modules built on it, and nothing else writes to
+ * the database. There are no migrations. A field added later must be optional
+ * on read (see the defaults in app/lib/settings.ts) because older documents
+ * won't have it.
+ *
+ * Timestamps are stored as Firestore Timestamps and come back as Dates.
  */
 
-export const bookings = pgTable("bookings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  customerName: text("customer_name").notNull(),
-  phone: text("phone").notNull(),
-  email: text("email"),
+/** `bookings/{id}`, where the ID is a UUID the app mints. */
+export type Booking = {
+  id: string;
+  customerName: string;
+  phone: string;
+  email: string | null;
 
-  // As the operator typed them, in company-local time.
-  pickupDate: date("pickup_date", { mode: "string" }).notNull(),
-  pickupTime: time("pickup_time").notNull(),
+  // As the operator typed them, in company-local time: "YYYY-MM-DD" and
+  // "HH:MM:SS". These are what the form shows and what the run sheet prints.
+  // The date is also what invoices filter on, and sorts correctly as a string.
+  pickupDate: string;
+  pickupTime: string;
 
-  // The same moment as an absolute instant. Everything that compares against
-  // "now" reads this, never the two columns above.
-  pickupAt: timestamp("pickup_at", { withTimezone: true, mode: "date" }).notNull(),
+  // The same moment as an absolute instant, resolved through settings.timezone
+  // at write time. Everything that compares against "now" reads this, never the
+  // two fields above: comparing a naive local time against a UTC clock flips a
+  // booking's status hours early or late.
+  pickupAt: Date;
 
-  pickupLocation: text("pickup_location").notNull(),
-  dropoffLocation: text("dropoff_location").notNull(),
-  vehicle: text("vehicle").notNull(),
-  passengers: integer("passengers").notNull(),
+  pickupLocation: string;
+  dropoffLocation: string;
+  vehicle: string;
+  passengers: number;
 
-  // Money stays a string end to end: numeric parsed into a float loses cents.
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  // Money stays a string end to end: a float loses cents.
+  price: string;
 
-  notes: text("notes"),
+  notes: string | null;
 
-  status: text("status").$type<StoredStatus>().notNull().default("scheduled"),
-  completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
+  // 'in progress' is deliberately absent: it is a window in time, derived from
+  // pickupAt, never stored. See app/lib/booking-status.ts.
+  status: StoredStatus;
+  completedAt: Date | null;
 
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
-});
+  createdAt: Date;
+  updatedAt: Date;
+};
 
-export const settings = pgTable("settings", {
-  id: integer("id").primaryKey().default(1),
-  companyName: text("company_name").notNull(),
-  phone: text("phone").notNull(),
-  email: text("email").notNull(),
-  address: text("address").notNull(),
-  timezone: text("timezone").notNull().default("America/Toronto"),
+/** `settings/company` — the one settings document, and the invoice letterhead. */
+export type Settings = {
+  companyName: string;
+  phone: string;
+  email: string;
+  address: string;
+
+  // IANA name. Interprets pickupDate + pickupTime into pickupAt, so it must be
+  // right before the first booking is entered.
+  timezone: string;
 
   // Printed on invoices so the customer can claim an input tax credit. Null
   // when the operator isn't registered for HST.
-  hstNumber: text("hst_number"),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
-});
+  hstNumber: string | null;
+  updatedAt: Date;
+};
 
-export const authAttempts = pgTable("auth_attempts", {
-  ip: text("ip").primaryKey(),
-  attempts: integer("attempts").notNull().default(0),
-  lockedUntil: timestamp("locked_until", { withTimezone: true, mode: "date" }),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
-});
-
-export type Booking = typeof bookings.$inferSelect;
-export type NewBooking = typeof bookings.$inferInsert;
-export type Settings = typeof settings.$inferSelect;
+/** `authAttempts/{sha256 of ip}` — throttles the shared password. */
+export type AuthAttempt = {
+  ip: string;
+  attempts: number;
+  lockedUntil: Date | null;
+  updatedAt: Date;
+};
