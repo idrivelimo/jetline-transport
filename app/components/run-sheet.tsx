@@ -11,6 +11,7 @@ import {
   relativeDayLabel,
 } from "@/app/lib/format";
 import { changeBookingStatus } from "@/app/bookings/actions";
+import { DeleteBooking } from "./delete-booking";
 
 /**
  * The run sheet: trips in time order under the day they run, separated by
@@ -106,7 +107,7 @@ function BookingRow({ booking }: { booking: Booking }) {
           <div className={`tabular text-[15px] ${canceled ? "text-slate" : "text-ink"}`}>
             {formatMoney(booking.price)}
           </div>
-          <div className="flex gap-x-3">
+          <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
             {booking.status === "canceled" ? (
               <RowAction id={booking.id} intent="restore">Restore</RowAction>
             ) : (
@@ -117,6 +118,7 @@ function BookingRow({ booking }: { booking: Booking }) {
                 <RowAction id={booking.id} intent="cancel">Cancel</RowAction>
               </>
             )}
+            <DeleteBooking id={booking.id} customerName={booking.customerName} compact />
           </div>
         </div>
       </div>

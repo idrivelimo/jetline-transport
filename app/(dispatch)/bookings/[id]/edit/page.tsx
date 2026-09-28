@@ -40,7 +40,7 @@ export default async function EditBookingPage(props: PageProps<"/bookings/[id]/e
       />
 
       <div className="mt-10 max-w-2xl border-t border-rule pt-5">
-        <DeleteBooking id={booking.id} customerName={booking.customerName} />
+        <DeleteBooking id={booking.id} customerName={booking.customerName} returnTo="/" />
       </div>
     </>
   );

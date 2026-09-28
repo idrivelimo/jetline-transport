@@ -71,4 +71,11 @@ export async function changeBookingStatus(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/");
+
+  // A page that showed only this booking has nothing left to show. Paths on
+  // this site only, so the field can't become an open redirect.
+  const returnTo = formData.get("returnTo");
+  if (typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+    redirect(returnTo); // Throws by design — must stay outside any try/catch.
+  }
 }
