@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { saveSettings } from "@/app/settings/actions";
 import { EMPTY_FORM, type FormState } from "@/app/lib/form-state";
+import { LogoField } from "./logo-field";
 
 export function SettingsForm({
   initial,
@@ -47,7 +48,30 @@ export function SettingsForm({
   return (
     <form action={formAction} className="max-w-xl">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <LogoField initial={initial.logo ?? ""} label="Logo" error={state.errors.logo} />
+        </div>
+
         <div className="sm:col-span-2">{field("companyName", "Company name")}</div>
+
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label htmlFor="legalName" className="text-sm font-medium text-ink">
+            Legal name (optional)
+          </label>
+          <input
+            id="legalName"
+            name="legalName"
+            type="text"
+            defaultValue={values.legalName ?? ""}
+            placeholder="14553063 Canada Inc."
+            className="rounded-sm border border-rule bg-card px-3 py-2 text-[15px] text-ink
+                       placeholder:text-slate/60 focus:border-brass focus:outline-none"
+          />
+          <p className="text-[13px] text-slate">
+            If you trade under a different name, invoices lead with this one, followed
+            by &ldquo;operating as&rdquo; and the company name.
+          </p>
+        </div>
         {field("phone", "Phone", "tel")}
         {field("email", "Email", "email")}
 

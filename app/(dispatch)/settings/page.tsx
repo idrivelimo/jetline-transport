@@ -24,6 +24,8 @@ export default async function SettingsPage() {
           address: current.address,
           timezone: current.timezone,
           hstNumber: current.hstNumber ?? "",
+          legalName: current.legalName ?? "",
+          logo: current.logo ?? "",
         }}
       />
     </>

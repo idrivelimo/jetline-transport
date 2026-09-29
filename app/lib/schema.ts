@@ -64,6 +64,27 @@ export type Settings = {
   // Printed on invoices so the customer can claim an input tax credit. Null
   // when the operator isn't registered for HST.
   hstNumber: string | null;
+
+  // The registered name, when the business trades under another one. The
+  // letterhead then reads "<legalName>, operating as <companyName>".
+  legalName: string | null;
+
+  // PNG or JPEG data URL; see app/lib/logo.ts.
+  logo: string | null;
+  updatedAt: Date;
+};
+
+/** `clients/{id}` — who an invoice is prepared for, saved to reuse. */
+export type Client = {
+  id: string;
+  name: string;
+  address: string | null;
+  email: string | null;
+  phone: string | null;
+
+  // PNG or JPEG data URL; see app/lib/logo.ts.
+  logo: string | null;
+  createdAt: Date;
   updatedAt: Date;
 };
 

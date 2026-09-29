@@ -41,6 +41,12 @@ export default async function DispatchLayout({
               Invoices
             </Link>
             <Link
+              href="/clients"
+              className="text-sm text-rule/70 transition-colors hover:text-card"
+            >
+              Clients
+            </Link>
+            <Link
               href="/settings"
               className="text-sm text-rule/70 transition-colors hover:text-card"
             >

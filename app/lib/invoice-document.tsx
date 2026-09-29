@@ -1,5 +1,6 @@
 import {
   Document,
+  Image,
   Page,
   Text,
   View,
@@ -7,7 +8,7 @@ import {
   renderToBuffer,
 } from "@react-pdf/renderer";
 
-import type { Booking, Settings } from "./schema";
+import type { Booking, Client, Settings } from "./schema";
 import {
   formatDateRange,
   formatDayMonth,
@@ -45,16 +46,43 @@ const styles = StyleSheet.create({
     color: INK,
   },
 
-  masthead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  company: { fontFamily: "Times-Roman", fontSize: 21, color: INK, marginBottom: 8 },
-  contact: { fontSize: 8.5, color: SLATE, lineHeight: 1.6 },
-  hstNumber: { fontSize: 8.5, color: SLATE, marginTop: 6 },
-  docBlock: { alignItems: "flex-end" },
-  docTitle: { fontFamily: "Times-Roman", fontSize: 14, color: INK },
-  issued: { fontSize: 8.5, color: SLATE, marginTop: 5 },
+  // The letterhead: the operator on the left, who it's prepared for on the
+  // right. Logos share one band so the text beneath them lines up whichever
+  // side has one; the text rows sit on a common bottom edge.
+  logoBand: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 64,
+    marginBottom: 14,
+  },
+  ownLogoBox: { width: 200, height: 64 },
+  clientLogoBox: { width: 150, height: 48 },
+  logoLeft: { width: "100%", height: "100%", objectFit: "contain", objectPositionX: 0 },
+  logoRight: { width: "100%", height: "100%", objectFit: "contain", objectPositionX: "100%" },
 
-  brassRule: { height: 2, backgroundColor: BRASS, marginTop: 22, marginBottom: 18 },
-  period: { fontSize: 10, color: INK, marginBottom: 18 },
+  masthead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
+  ownBlock: { flex: 1, paddingRight: 24 },
+  clientBlock: { flex: 1, alignItems: "flex-end", textAlign: "right" },
+  company: { fontFamily: "Helvetica-Bold", fontSize: 12, color: INK, marginBottom: 5 },
+  operatingAs: { fontSize: 9, color: INK, marginBottom: 5 },
+  contact: { fontSize: 8.5, color: SLATE, lineHeight: 1.6 },
+  hstNumber: { fontSize: 8.5, color: SLATE, marginTop: 3 },
+  preparedFor: { fontSize: 9, color: SLATE, marginBottom: 5 },
+  clientName: { fontSize: 11.5, color: INK },
+  clientDetail: { fontSize: 8.5, color: SLATE, lineHeight: 1.6, textAlign: "right" },
+
+  brassRule: { height: 2, backgroundColor: BRASS, marginTop: 20, marginBottom: 16 },
+
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    marginBottom: 18,
+  },
+  docTitle: { fontFamily: "Times-Roman", fontSize: 16, color: INK, marginBottom: 4 },
+  period: { fontSize: 10, color: INK },
+  issued: { fontSize: 8.5, color: SLATE },
 
   headerRow: {
     flexDirection: "row",
@@ -117,13 +145,66 @@ const styles = StyleSheet.create({
   },
 });
 
+/** "416-671-2796  |  info@example.com", skipping whichever is blank. */
+const joined = (...parts: (string | null)[]) => parts.filter(Boolean).join("  |  ");
+
+function Letterhead({ settings, client }: { settings: Settings; client: Client | null }) {
+  const clientLogo = client?.logo ?? null;
+  const contact = joined(settings.phone, settings.email);
+
+  return (
+    <>
+      {(settings.logo || clientLogo) && (
+        <View style={styles.logoBand}>
+          {/* react-pdf's Image has no alt; the names are printed as text below. */}
+          <View style={styles.ownLogoBox}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            {settings.logo && <Image src={settings.logo} style={styles.logoLeft} />}
+          </View>
+          <View style={styles.clientLogoBox}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            {clientLogo && <Image src={clientLogo} style={styles.logoRight} />}
+          </View>
+        </View>
+      )}
+
+      <View style={styles.masthead}>
+        <View style={styles.ownBlock}>
+          <Text style={styles.company}>{settings.legalName ?? settings.companyName}</Text>
+          {settings.legalName && (
+            <Text style={styles.operatingAs}>operating as {settings.companyName}</Text>
+          )}
+          {contact && <Text style={styles.contact}>{contact}</Text>}
+          {settings.address && <Text style={styles.contact}>{settings.address}</Text>}
+          {settings.hstNumber && (
+            <Text style={styles.hstNumber}>HST {settings.hstNumber}</Text>
+          )}
+        </View>
+
+        {client && (
+          <View style={styles.clientBlock}>
+            <Text style={styles.preparedFor}>Prepared for</Text>
+            <Text style={styles.clientName}>{client.name}</Text>
+            {client.address && <Text style={styles.clientDetail}>{client.address}</Text>}
+            {(client.phone || client.email) && (
+              <Text style={styles.clientDetail}>{joined(client.phone, client.email)}</Text>
+            )}
+          </View>
+        )}
+      </View>
+    </>
+  );
+}
+
 function InvoiceDocument({
   settings,
+  client,
   bookings,
   taxed,
   issuedOn,
 }: {
   settings: Settings;
+  client: Client | null;
   bookings: Booking[];
   taxed: Set<string>;
   issuedOn: string;
@@ -144,28 +225,20 @@ function InvoiceDocument({
   return (
     <Document title={`Invoice — ${settings.companyName}`} author={settings.companyName}>
       <Page size="A4" style={styles.page}>
-        <View style={styles.masthead}>
-          <View>
-            <Text style={styles.company}>{settings.companyName}</Text>
-            <Text style={styles.contact}>{settings.address}</Text>
-            <Text style={styles.contact}>{settings.phone}</Text>
-            <Text style={styles.contact}>{settings.email}</Text>
-            {settings.hstNumber && (
-              <Text style={styles.hstNumber}>HST {settings.hstNumber}</Text>
-            )}
-          </View>
-          <View style={styles.docBlock}>
-            <Text style={styles.docTitle}>Invoice</Text>
-            <Text style={styles.issued}>Issued {formatDateRange(issuedOn, issuedOn)}</Text>
-          </View>
-        </View>
+        <Letterhead settings={settings} client={client} />
 
         <View style={styles.brassRule} />
 
-        <Text style={styles.period}>
-          {count === 1 ? "One trip on " : `${count} trips from `}
-          {formatDateRange(first, last)}
-        </Text>
+        <View style={styles.titleRow}>
+          <View>
+            <Text style={styles.docTitle}>Invoice</Text>
+            <Text style={styles.period}>
+              {count === 1 ? "One trip on " : `${count} trips from `}
+              {formatDateRange(first, last)}
+            </Text>
+          </View>
+          <Text style={styles.issued}>Issued {formatDateRange(issuedOn, issuedOn)}</Text>
+        </View>
 
         {/* `fixed` repeats the column headings if the trips run to a second page. */}
         <View style={styles.headerRow} fixed>
@@ -238,6 +311,7 @@ function InvoiceDocument({
 
 export async function buildInvoicePdf(
   settings: Settings,
+  client: Client | null,
   bookings: Booking[],
   taxed: Set<string>,
 ): Promise<Buffer> {
@@ -245,6 +319,7 @@ export async function buildInvoicePdf(
   return renderToBuffer(
     <InvoiceDocument
       settings={settings}
+      client={client}
       bookings={bookings}
       taxed={taxed}
       issuedOn={issuedOn}

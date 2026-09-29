@@ -1,5 +1,6 @@
 import { hasSession, unauthorized } from "@/app/lib/dal";
 import { getBookingsForInvoice } from "@/app/lib/invoices";
+import { getClient } from "@/app/lib/clients";
 import { getSettings } from "@/app/lib/settings";
 import { buildInvoicePdf } from "@/app/lib/invoice-document";
 
@@ -29,9 +30,13 @@ export async function POST(request: Request): Promise<Response> {
     return new Response("Select at least one trip to invoice.", { status: 400 });
   }
 
+  // "Prepared for" is optional; an unknown or deleted client just leaves it off.
+  const clientId = form.get("clientId");
+
   // Read the rows back from the database rather than trusting posted amounts.
-  const [settings, bookings] = await Promise.all([
+  const [settings, client, bookings] = await Promise.all([
     getSettings(),
+    typeof clientId === "string" && clientId ? getClient(clientId) : null,
     getBookingsForInvoice(ids),
   ]);
 
@@ -39,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
     return new Response("Those trips no longer exist.", { status: 404 });
   }
 
-  const pdf = await buildInvoicePdf(settings, bookings, taxed);
+  const pdf = await buildInvoicePdf(settings, client, bookings, taxed);
 
   const first = bookings[0].pickupDate;
   const last = bookings[bookings.length - 1].pickupDate;

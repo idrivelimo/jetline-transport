@@ -22,6 +22,8 @@ const DEFAULTS: Omit<Settings, "updatedAt"> = {
   address: "",
   timezone: "America/Toronto",
   hstNumber: null,
+  legalName: null,
+  logo: null,
 };
 
 export async function getSettings(): Promise<Settings> {

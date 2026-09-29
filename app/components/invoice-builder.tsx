@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import type { Booking } from "@/app/lib/schema";
 import { formatDateShort, formatMoney } from "@/app/lib/format";
@@ -21,9 +22,11 @@ import { HST_LABEL, invoiceTotals } from "@/app/lib/tax";
 export function InvoiceBuilder({
   bookings,
   includeCanceled,
+  clients,
 }: {
   bookings: Booking[];
   includeCanceled: boolean;
+  clients: { id: string; name: string }[];
 }) {
   const allIds = () => new Set(bookings.map((b) => b.id));
   const [selected, setSelected] = useState<Set<string>>(allIds);
@@ -199,7 +202,34 @@ export function InvoiceBuilder({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-4">
+      <div className="mt-5 flex flex-wrap items-end gap-x-5 gap-y-3">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="clientId" className="text-sm font-medium text-ink">
+            Prepared for
+          </label>
+          {clients.length > 0 ? (
+            <select
+              id="clientId"
+              name="clientId"
+              defaultValue=""
+              className="min-w-56 rounded-sm border border-rule bg-card px-3 py-2 text-sm text-ink
+                         focus:border-brass focus:outline-none"
+            >
+              <option value="">No client on the invoice</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          ) : (
+            <p className="py-2 text-sm text-slate">
+              No saved clients.{" "}
+              <Link href="/clients/new" className="text-ink underline underline-offset-2">
+                Add one
+              </Link>
+            </p>
+          )}
+        </div>
+
         <button
           type="submit"
           disabled={chosen.length === 0}

@@ -1,4 +1,5 @@
 import { listForInvoice } from "@/app/lib/invoices";
+import { listClientNames } from "@/app/lib/clients";
 import { getSettings } from "@/app/lib/settings";
 import { monthBounds, todayInTimezone } from "@/app/lib/format";
 import { InvoiceBuilder } from "@/app/components/invoice-builder";
@@ -13,7 +14,10 @@ export default async function InvoicesPage(props: PageProps<"/invoices">) {
   const to = typeof params.to === "string" ? params.to : thisMonth.to;
   const includeCanceled = params.includeCanceled === "on";
 
-  const bookings = await listForInvoice({ from, to, includeCanceled });
+  const [bookings, clients] = await Promise.all([
+    listForInvoice({ from, to, includeCanceled }),
+    listClientNames(),
+  ]);
 
   return (
     <>
@@ -70,7 +74,11 @@ export default async function InvoicesPage(props: PageProps<"/invoices">) {
           </p>
         </div>
       ) : (
-        <InvoiceBuilder bookings={bookings} includeCanceled={includeCanceled} />
+        <InvoiceBuilder
+          bookings={bookings}
+          includeCanceled={includeCanceled}
+          clients={clients}
+        />
       )}
     </>
   );

@@ -9,7 +9,7 @@ import {
   type QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
 
-import type { AuthAttempt, Booking, Settings } from "./schema";
+import type { AuthAttempt, Booking, Client, Settings } from "./schema";
 
 /**
  * The Firestore client, through the Admin SDK.
@@ -70,27 +70,37 @@ function converter<T extends object>(): FirestoreDataConverter<T> {
   };
 }
 
-const bookingConverter: FirestoreDataConverter<Booking> = {
-  // The ID is the document's name, not a field, so the two can't disagree.
-  toFirestore: (booking: PartialWithFieldValue<Booking>) =>
-    Object.fromEntries(Object.entries(booking).filter(([key]) => key !== "id")),
-  fromFirestore: (snapshot: QueryDocumentSnapshot) =>
-    ({ ...withDates(snapshot.data()), id: snapshot.id }) as Booking,
-};
-
-export function bookingsCollection() {
-  return db().collection("bookings").withConverter(bookingConverter);
+function withIdConverter<T extends { id: string }>(): FirestoreDataConverter<T> {
+  return {
+    // The ID is the document's name, not a field, so the two can't disagree.
+    toFirestore: (model: PartialWithFieldValue<T>) =>
+      Object.fromEntries(Object.entries(model).filter(([key]) => key !== "id")),
+    fromFirestore: (snapshot: QueryDocumentSnapshot) =>
+      ({ ...withDates(snapshot.data()), id: snapshot.id }) as T,
+  };
 }
 
 /**
  * IDs arrive from URLs and form fields. Anything but a UUID of the kind the app
- * mints is not a booking, and one containing a slash would address a different
- * document path entirely, so it never reaches Firestore.
+ * mints is not a booking or client, and one containing a slash would address a
+ * different document path entirely, so it never reaches Firestore.
  */
-const BOOKING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const APP_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function bookingsCollection() {
+  return db().collection("bookings").withConverter(withIdConverter<Booking>());
+}
 
 export function bookingRef(id: string) {
-  return BOOKING_ID.test(id) ? bookingsCollection().doc(id) : null;
+  return APP_ID.test(id) ? bookingsCollection().doc(id) : null;
+}
+
+export function clientsCollection() {
+  return db().collection("clients").withConverter(withIdConverter<Client>());
+}
+
+export function clientRef(id: string) {
+  return APP_ID.test(id) ? clientsCollection().doc(id) : null;
 }
 
 export function settingsDoc() {
