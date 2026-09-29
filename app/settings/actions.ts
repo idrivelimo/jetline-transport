@@ -13,7 +13,9 @@ const settingsInput = z.object({
   companyName: required("Company name"),
   phone: required("Phone"),
   email: required("Email"),
-  address: required("Address"),
+  // Optional: the letterhead reads fine without one, and a required field
+  // here silently blocked saving for anyone with nothing to put in it.
+  address: z.string().trim(),
   timezone: z
     .string()
     .refine((v) => supportedTimezones().includes(v), "Choose a timezone from the list."),
@@ -51,7 +53,16 @@ export async function saveSettings(
   const parsed = settingsInput.safeParse(values);
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values: echo };
 
-  await updateSettings(parsed.data);
+  try {
+    await updateSettings(parsed.data);
+  } catch (error) {
+    // Shown beside the Save button, so a failed write can't pass for a save.
+    console.error("Saving settings failed:", error);
+    return {
+      errors: { form: "Couldn’t save to the database. Try again in a moment." },
+      values: echo,
+    };
+  }
   revalidatePath("/");
 
   // `saved` drives the confirmation line; it is not a settings field.

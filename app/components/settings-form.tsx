@@ -19,7 +19,8 @@ export function SettingsForm({
   );
 
   const values = Object.keys(state.values).length > 0 ? state.values : initial;
-  const saved = state.values.saved === "1" && Object.keys(state.errors).length === 0;
+  const hasErrors = Object.keys(state.errors).length > 0;
+  const saved = state.values.saved === "1" && !hasErrors;
 
   const field = (name: string, label: string, type = "text") => (
     <div className="flex flex-col gap-1.5">
@@ -77,7 +78,7 @@ export function SettingsForm({
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label htmlFor="address" className="text-sm font-medium text-ink">
-            Address
+            Address (optional)
           </label>
           <textarea
             id="address"
@@ -144,6 +145,13 @@ export function SettingsForm({
           {isPending ? "Saving" : "Save settings"}
         </button>
         {saved && <p className="text-sm text-slate">Settings saved.</p>}
+        {/* Field errors sit beside their fields, which may be scrolled out of
+            view; this line makes sure a refused save never looks like a save. */}
+        {hasErrors && (
+          <p role="alert" className="text-sm text-ink">
+            {state.errors.form ?? "Not saved. Fix the fields marked above."}
+          </p>
+        )}
       </div>
     </form>
   );
